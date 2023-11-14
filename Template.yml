@@ -1,0 +1,300 @@
+AWSTemplateFormatVersion: '2023-11-01'
+Description: FridayHITT Mini Network with Jump Box, Security Rules, Routing, and NAT Gateway
+
+Parameters:
+  # Parameter for defining the IP address range of the VPC.
+  VpcCidrBlock:
+    Type: String
+    Default: 10.0.0.0/16
+    Description: IP address range for the VPC
+
+  # Parameter for specifying the SSH key pair used for access.
+  KeyPairName:
+    Type: AWS::EC2::KeyPair::KeyName
+    Description: Key pair for SSH access
+
+  # Parameter for choosing the EC2 instance type for both public and private instances.
+  EC2InstanceType:
+    Type: String
+    Default: t2.micro
+    Description: EC2 instance type for public and private instances
+
+  # Parameter for selecting the EC2 Amazon Machine Image (AMI) ID.
+  EC2ImageId:
+    Type: AWS::EC2::ImageId
+    Default: ami-0a1f6cc8163bdcc75
+    Description: EC2 Amazon Machine Image (AMI) ID
+
+  # Parameter to define the allowed IP range for SSH access to the Jump Box.
+  JumpBoxSSHAllowedIPRange:
+    Type: String
+    Description: Allowed IP range for SSH access to the Jump Box
+    Default: 0.0.0.0/0
+
+Resources:
+  # VPC
+  MyVPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: !Ref VpcCidrBlock
+      Tags:
+        - Key: Name
+          Value: FridayHITT VPC
+
+  # Internet Gateway
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: InternetGateway
+        - Key: Environment
+          Value: FridayHITT
+
+  # Comment: Attaching Internet Gateway to VPC
+  AttachGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref MyVPC
+      InternetGatewayId: !Ref InternetGateway
+
+  # Public Subnet 1 (AZ A)
+  PublicSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref MyVPC
+      AvailabilityZone: !Select [0, !GetAZs ""]
+      CidrBlock: "10.0.0.0/24"
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: PublicSubnet1
+        - Key: Environment
+          Value: FridayHITT
+
+  # Public Subnet 2 (AZ B)
+  PublicSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref MyVPC
+      AvailabilityZone: !Select [1, !GetAZs ""]
+      CidrBlock: "10.0.1.0/24"
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: PublicSubnet2
+        - Key: Environment
+          Value: FridayHITT
+
+  # Private Subnet 1 (AZ A)
+  PrivateSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref MyVPC
+      AvailabilityZone: !Select [0, !GetAZs ""]
+      CidrBlock: "10.0.2.0/24"
+      Tags:
+        - Key: Name
+          Value: PrivateSubnet1
+        - Key: Environment
+          Value: FridayHITT
+
+  # Private Subnet 2 (AZ B)
+  PrivateSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref MyVPC
+      AvailabilityZone: !Select [1, !GetAZs ""]
+      CidrBlock: "10.0.3.0/24"
+      Tags:
+        - Key: Name
+          Value: PrivateSubnet2
+        - Key: Environment
+          Value: FridayHITT
+
+  # Routing Table for Public Subnets
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref MyVPC
+      Tags:
+        - Key: Name
+          Value: PublicRouteTable
+        - Key: Environment
+          Value: FridayHITT
+
+  # Routing Table for Private Subnets
+  PrivateRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref MyVPC
+      Tags:
+        - Key: Name
+          Value: PrivateRouteTable
+        - Key: Environment
+          Value: FridayHITT
+
+  # Route for directing public traffic to the Internet Gateway (Public Route Table)
+  PublicRoute:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: "0.0.0.0/0"
+      GatewayId: !Ref InternetGateway
+
+  # Association of Public Subnet 1 with Public Route Table
+  PublicSubnet1Association:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet1
+      RouteTableId: !Ref PublicRouteTable
+
+  # Association of Public Subnet 2 with Public Route Table
+  PublicSubnet2Association:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet2
+      RouteTableId: !Ref PublicRouteTable
+
+  # Association of Private Subnet 1 with Private Route Table
+  PrivateSubnet1Association:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnet1
+      RouteTableId: !Ref PrivateRouteTable
+
+  # Association of Private Subnet 2 with Private Route Table
+  PrivateSubnet2Association:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnet2
+      RouteTableId: !Ref PrivateRouteTable
+
+  # NAT Gateway for routing traffic from Private Subnet 1 to the Internet (AZ A)
+  NatGateway1:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      SubnetId: !Ref PublicSubnet1
+
+  # NAT Gateway for routing traffic from Private Subnet 2 to the Internet (AZ B)
+  NatGateway2:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      SubnetId: !Ref PublicSubnet2
+
+  # Security Group for EC2 instances.
+  SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for EC2 instances
+      VpcId: !Ref MyVPC
+      Tags:
+        - Key: Name
+          Value: SecurityGroupEC2
+        - Key: Environment
+          Value: FridayHITT
+
+  # Security Group for the Jump Box (SSH access).
+  JumpBoxSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for Jump Box
+      VpcId: !Ref MyVPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: !Ref JumpBoxSSHAllowedIPRange  # Specify the allowed IP range
+      Tags:
+        - Key: Name
+          Value: SecurityGroupJumpBox
+        - Key: Environment
+          Value: FridayHITT
+
+  # Security Group for EC2 instances in the private subnet (SSH access).
+  EC2SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for EC2 instances in the private subnet
+      VpcId: !Ref MyVPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: !Ref JumpBoxSSHAllowedIPRange  # Use the same allowed IP range as JumpBoxSecurityGroup
+      Tags:
+        - Key: Name
+          Value: SecurityGroupEC2Private
+        - Key: Environment
+          Value: FridayHITT
+
+  # EC2 Instance for the Jump Box (in Public Subnet 1)
+  JumpBoxInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: !Ref EC2InstanceType
+      SecurityGroupIds:
+        - !Ref JumpBoxSecurityGroup
+      SubnetId: !Ref PublicSubnet1
+      KeyName: !Ref KeyPairName
+      ImageId: !Ref EC2ImageId
+      Tags:
+        - Key: Name
+          Value: JumpBoxInstance
+        - Key: Environment
+          Value: FridayHITT
+
+  # EC2 Instance for private use (in Private Subnet 1)
+  EC2InstancePrivate1:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: !Ref EC2InstanceType
+      SecurityGroupIds:
+        - !Ref EC2SecurityGroup
+      SubnetId: !Ref PrivateSubnet1
+      KeyName: !Ref KeyPairName
+      ImageId: !Ref EC2ImageId
+      Tags:
+        - Key: Name
+          Value: EC2InstancePrivate1
+        - Key: Environment
+          Value: FridayHITT
+
+  # EC2 Instance for private use (in Private Subnet 2)
+  EC2InstancePrivate2:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: !Ref EC2InstanceType
+      SecurityGroupIds:
+        - !Ref EC2SecurityGroup
+      SubnetId: !Ref PrivateSubnet2
+      KeyName: !Ref KeyPairName
+      ImageId: !Ref EC2ImageId
+      Tags:
+        - Key: Name
+          Value: EC2InstancePrivate2
+        - Key: Environment
+          Value: FridayHITT
+
+  # CloudWatch Logs Group for EC2 instances
+  EC2InstanceLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "${AWS::StackName}/EC2InstanceLogs"
+      RetentionInDays: 7
+
+Outputs:
+  # Output the VPC ID.
+  VPCId:
+    Description: VPC ID
+    Value: !Ref MyVPC
+
+  # Output the IDs of the public subnets.
+  PublicSubnetIds:
+    Description: IDs of the public subnets
+    Value: !Join [",", [!Ref PublicSubnet1, !Ref PublicSubnet2]]
+
+  # Output the IDs of the private subnets.
+  PrivateSubnetIds:
+    Description: IDs of the private subnets
+    Value: !Join [",", [!Ref PrivateSubnet1, !Ref PrivateSubnet2]]

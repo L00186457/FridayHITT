@@ -1,0 +1,45 @@
+Resources:
+  JumpBoxInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: !Ref EC2InstanceType
+      SecurityGroupIds:
+        - !Ref JumpBoxSecurityGroup
+      SubnetId: !Ref PublicSubnet1
+      KeyName: !Ref KeyPairName
+      ImageId: !Ref EC2ImageId
+      Tags:
+        - Key: Name
+          Value: JumpBoxInstance
+        - Key: Environment
+          Value: FridayHITT
+
+  EC2InstancePrivate1:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: !Ref EC2InstanceType
+      SecurityGroupIds:
+        - !Ref EC2SecurityGroup
+      SubnetId: !Ref PrivateSubnet1
+      KeyName: !Ref KeyPairName
+      ImageId: !Ref EC2ImageId
+      Tags:
+        - Key: Name
+          Value: EC2InstancePrivate1
+        - Key: Environment
+          Value: FridayHITT
+
+  EC2InstancePrivate2:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: !Ref EC2InstanceType
+      SecurityGroupIds:
+        - !Ref EC2SecurityGroup
+      SubnetId: !Ref PrivateSubnet2
+      KeyName: !Ref KeyPairName
+      ImageId: !Ref EC2ImageId
+      Tags:
+        - Key: Name
+          Value: EC2InstancePrivate2
+        - Key: Environment
+          Value: FridayHITT
