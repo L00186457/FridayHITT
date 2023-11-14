@@ -22,7 +22,7 @@ Parameters:
   # Parameter for selecting the EC2 Amazon Machine Image (AMI) ID.
   EC2ImageId:
     Type: AWS::EC2::ImageId
-    Default: ami-0a1f6cc8163bdcc75
+    Default: ami-testID
     Description: EC2 Amazon Machine Image (AMI) ID
 
   # Parameter to define the allowed IP range for SSH access to the Jump Box.

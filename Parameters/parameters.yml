@@ -18,7 +18,7 @@ Parameters:
 
   EC2ImageId:
     Type: AWS::EC2::ImageId
-    Default: ami-02142355454
+    Default: ami-testID
     Description: EC2 Amazon Machine Image (AMI) ID
 
   JumpBoxSSHAllowedIPRange:
