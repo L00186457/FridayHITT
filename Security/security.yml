@@ -1,0 +1,43 @@
+Resources:
+  SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for EC2 instances
+      VpcId: !Ref MyVPC
+      Tags:
+        - Key: Name
+          Value: SecurityGroupEC2
+        - Key: Environment
+          Value: FridayHITT
+
+  JumpBoxSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for Jump Box
+      VpcId: !Ref MyVPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: !Ref JumpBoxSSHAllowedIPRange
+      Tags:
+        - Key: Name
+          Value: SecurityGroupJumpBox
+        - Key: Environment
+          Value: FridayHITT
+
+  EC2SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for EC2 instances in the private subnet
+      VpcId: !Ref MyVPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: !Ref JumpBoxSSHAllowedIPRange
+      Tags:
+        - Key: Name
+          Value: SecurityGroupEC2Private
+        - Key: Environment
+          Value: FridayHITT
