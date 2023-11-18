@@ -1,4 +1,4 @@
-AWSTemplateFormatVersion: '2023-11-01'
+AWSTemplateFormatVersion: '2010-09-09'
 Description: FridayHITT Mini Network with Jump Box, Security Rules, Routing, and NAT Gateway
 
 Parameters:
