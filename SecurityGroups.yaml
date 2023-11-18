@@ -1,9 +1,17 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: FridayHITT Security Groups
+
+Parameters:
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+    Description: VPC ID
+
 Resources:
   SecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupDescription: Security group for EC2 instances
-      VpcId: !Ref MyVPC
+      VpcId: !Ref VpcId
       Tags:
         - Key: Name
           Value: SecurityGroupEC2
@@ -14,12 +22,12 @@ Resources:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupDescription: Security group for Jump Box
-      VpcId: !Ref MyVPC
+      VpcId: !Ref VpcId
       SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: 22
           ToPort: 22
-          CidrIp: !Ref JumpBoxSSHAllowedIPRange
+          CidrIp: !Ref JumpBoxSSHAllowedIPRange  # Specify the allowed IP range
       Tags:
         - Key: Name
           Value: SecurityGroupJumpBox
@@ -30,12 +38,12 @@ Resources:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupDescription: Security group for EC2 instances in the private subnet
-      VpcId: !Ref MyVPC
+      VpcId: !Ref VpcId
       SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: 22
           ToPort: 22
-          CidrIp: !Ref JumpBoxSSHAllowedIPRange
+          CidrIp: !Ref JumpBoxSSHAllowedIPRange  # Use the same allowed IP range as JumpBoxSecurityGroup
       Tags:
         - Key: Name
           Value: SecurityGroupEC2Private

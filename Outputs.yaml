@@ -1,4 +1,7 @@
-Outputs:
+AWSTemplateFormatVersion: '2010-09-09'
+Description: FridayHITT Outputs
+
+Resources:
   VPCId:
     Description: VPC ID
     Value: !Ref MyVPC

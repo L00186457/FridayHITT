@@ -1,6 +1,0 @@
-Resources:
-  EC2InstanceLogGroup:
-    Type: AWS::Logs::LogGroup
-    Properties:
-      LogGroupName: !Sub "${AWS::StackName}/EC2InstanceLogs"
-      RetentionInDays: 7
