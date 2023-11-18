@@ -1,4 +1,4 @@
-AWSTemplateFormatVersion: '2023-11-01'
+AWSTemplateFormatVersion: '2010-09-09'
 Description: FridayHITT Mini Network with Jump Box, Security Rules, Routing, and NAT Gateway
 
 Parameters:
@@ -11,6 +11,7 @@ Parameters:
   # Parameter for specifying the SSH key pair used for access.
   KeyPairName:
     Type: AWS::EC2::KeyPair::KeyName
+    Default: default_123
     Description: Key pair for SSH access
 
   # Parameter for choosing the EC2 instance type for both public and private instances.
@@ -21,8 +22,8 @@ Parameters:
 
   # Parameter for selecting the EC2 Amazon Machine Image (AMI) ID.
   EC2ImageId:
-    Type: AWS::EC2::ImageId
-    Default: ami-testID
+    Type: AWS::EC2::Image::Id
+    Default: ami-123
     Description: EC2 Amazon Machine Image (AMI) ID
 
   # Parameter to define the allowed IP range for SSH access to the Jump Box.
@@ -126,6 +127,9 @@ Resources:
   # Routing Table for Private Subnets
   PrivateRouteTable:
     Type: AWS::EC2::RouteTable
+    DependsOn:
+      - NatGateway1
+      - NatGateway2
     Properties:
       VpcId: !Ref MyVPC
       Tags:
@@ -170,17 +174,27 @@ Resources:
       SubnetId: !Ref PrivateSubnet2
       RouteTableId: !Ref PrivateRouteTable
 
+  # Elastic IP for NAT Gateway 1
+  NatGateway1EIP:
+    Type: AWS::EC2::EIP
+
+  # Elastic IP for NAT Gateway 2
+  NatGateway2EIP:
+    Type: AWS::EC2::EIP
+  
   # NAT Gateway for routing traffic from Private Subnet 1 to the Internet (AZ A)
   NatGateway1:
     Type: AWS::EC2::NatGateway
     Properties:
       SubnetId: !Ref PublicSubnet1
+      AllocationId: !GetAtt NatGateway1EIP.AllocationId
 
   # NAT Gateway for routing traffic from Private Subnet 2 to the Internet (AZ B)
   NatGateway2:
     Type: AWS::EC2::NatGateway
     Properties:
       SubnetId: !Ref PublicSubnet2
+      AllocationId: !GetAtt NatGateway2EIP.AllocationId
 
   # Security Group for EC2 instances.
   SecurityGroup:
